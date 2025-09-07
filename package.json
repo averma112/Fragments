@@ -11,5 +11,8 @@
     "url": "git+https://github.com/averma112/fragments.git"
   },
   "author": "Ashu",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
 }
