@@ -44,7 +44,7 @@ Logging
 - Pino is used as our structured logger, configured in `src/logger.js`.
 - When `LOG_LEVEL=debug`, logs are pretty-printed and environment variables are printed on server startup to assist with debugging.
 
-#Code Formatting and Linting
+Code Formatting and Linting
 
 - Prettier automatically formats code on save in VSCode.
 - ESLint catches common code issues. Run `npm run lint` regularly to check for problems.
@@ -53,7 +53,6 @@ Security Considerations
 
 - Avoid running in debug mode in production as sensitive environment variables will be printed.
 - Use explicit `git add` commands to avoid accidentally committing sensitive files.
-- Your `.gitignore` excludes `node_modules/` and other non-source files.
 
 Additional Notes
 
