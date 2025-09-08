@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
     status: 'ok',
     author,
     // TODO: change this to use your GitHub username!
-    githubUrl: 'https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/fragments',
+    githubUrl: 'https://github.com/averma112/fragments',
     version,
   });
 });
