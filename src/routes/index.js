@@ -7,11 +7,11 @@ const { version, author } = require('../../package.json');
 
 // Create a router that we can use to mount our API
 const router = express.Router();
-
+const { authenticate } = require('../auth');
 /**
  * Expose all of our API routes on /v1/* to include an API version.
  */
-router.use(`/v1`, require('./api'));
+router.use(`/v1`,authenticate() ,require('./api'));
 
 /**
  * Define a simple health check route. If the server is running
