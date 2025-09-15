@@ -50,7 +50,9 @@ module.exports.strategy = () =>
       // also do a lookup in a database, but we don't need it.
       done(null, user.email);
     } catch (err) {
+      // Log the entire Cognito error message
       logger.error({ err, token }, 'could not verify token');
+      console.error('Cognito verification error:', err); // <-- Add this line
       done(null, false);
     }
   });

@@ -18,6 +18,7 @@ router.use(`/v1`,authenticate() ,require('./api'));
  * we'll respond with a 200 OK.  If not, the server isn't healthy.
  */
 router.get('/', (req, res) => {
+    console.log("In index")
   // Client's shouldn't cache this response (always request it fresh)
   res.setHeader('Cache-Control', 'no-cache');
   // Send a 200 'OK' response
@@ -25,7 +26,7 @@ router.get('/', (req, res) => {
     status: 'ok',
     author,
     // Use your own GitHub URL for this!
-    githubUrl: 'https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/fragments',
+    githubUrl: 'https://github.com/averma112/fragments',
     version,
   });
 });
