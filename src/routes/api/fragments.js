@@ -55,7 +55,9 @@ router.post('/', rawBody(), async (req, res) => {
 
     res.set('Location', `${process.env.API_URL}/v1/fragments/${fragment.id}`);
 
-    const { data: _, ...fragmentData } = fragment;
+    // Exclude the raw data from the response without creating an unused variable
+    const fragmentData = { ...fragment };
+    delete fragmentData.data;
     res.status(201).json(createSuccessResponse({ fragment: fragmentData }));
   } catch (err) {
     log.error({ err }, 'Error creating fragment');
