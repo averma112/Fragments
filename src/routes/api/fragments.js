@@ -3,10 +3,10 @@ const { Fragment } = require('../../model/fragment');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
 const log = require('../../logger');
 
-// Create a router that we can use to mount our API
 const router = express.Router();
+const MarkdownIt = require('markdown-it');
+const md = new MarkdownIt();
 
-// Support sending various Content-Types on the body up to 5MB in size
 const rawBody = () =>
   express.raw({
     inflate: true,
@@ -23,12 +23,10 @@ const rawBody = () =>
   });
 
 
-/**
- * POST /fragments - Create a new fragment
- */
+
 router.post('/', rawBody(), async (req, res) => {
   try {
-    const ownerId = req.user; // Set by auth middleware
+    const ownerId = req.user; 
     const typeHeader = req.headers['content-type'];
 
     if (!ownerId) {
@@ -55,7 +53,6 @@ router.post('/', rawBody(), async (req, res) => {
 
     res.set('Location', `${process.env.API_URL}/v1/fragments/${fragment.id}`);
 
-    // Exclude the raw data from the response without creating an unused variable
     const fragmentData = { ...fragment };
     delete fragmentData.data;
     res.status(201).json(createSuccessResponse({ fragment: fragmentData }));
@@ -65,9 +62,24 @@ router.post('/', rawBody(), async (req, res) => {
   }
 });
 
-/**
- * GET /fragments - Get all fragments for the current user
- */
+router.get('/:id', async (req, res) => {
+  try {
+    const fragment = await Fragment.byId(req.user, req.params.id);
+    const data = await fragment.getData();
+
+    res.set('Content-Type', fragment.type);
+
+    res.status(200).send(data);
+  } catch (err) {
+    log.error({ err }, 'Error getting fragment');
+    if (err.message === 'Fragment not found') {
+      res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    } else {
+      res.status(500).json(createErrorResponse(500, err.message));
+    }
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const expand = req.query.expand === '1';
@@ -79,21 +91,28 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * GET /fragments/:id - Get a fragment by ID
- */
-router.get('/:id', async (req, res) => {
+
+// Return a fragment converted to a supported extension, e.g., Markdown to HTML
+router.get('/:id.:ext', async (req, res) => {
   try {
-    const fragment = await Fragment.byId(req.user, req.params.id);
+    const { id, ext } = req.params;
+    const fragment = await Fragment.byId(req.user, id);
     const data = await fragment.getData();
 
-    // Set the Content-Type header
-    res.set('Content-Type', fragment.type);
+    // Only support Markdown (.md) to HTML (.html) for now
+    if (ext === 'html' && fragment.mimeType === 'text/markdown') {
+      const source = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+      const html = md.render(source);
+      res.set('Content-Type', 'text/html');
+      return res.status(200).send(html);
+    }
 
-    // Send the raw data
-    res.status(200).send(data);
+    // Unsupported conversion requested
+    return res
+      .status(415)
+      .json(createErrorResponse(415, 'Unsupported conversion requested'));
   } catch (err) {
-    log.error({ err }, 'Error getting fragment');
+    log.error({ err }, 'Error converting fragment');
     if (err.message === 'Fragment not found') {
       res.status(404).json(createErrorResponse(404, 'Fragment not found'));
     } else {
@@ -101,5 +120,6 @@ router.get('/:id', async (req, res) => {
     }
   }
 });
+
 
 module.exports = router;

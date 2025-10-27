@@ -3,7 +3,6 @@ const { randomUUID } = require('crypto');
 // Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
 
-// Functions for working with fragment metadata/data using our DB
 const {
   readFragment,
   writeFragment,
@@ -21,7 +20,7 @@ class Fragment {
       throw new Error(`Unsupported type: ${type}`);
     }
 
-    // Validate size
+    
     if (typeof size !== 'number' || Number.isNaN(size)) {
       throw new Error('size must be a number');
     }
@@ -85,6 +84,9 @@ class Fragment {
     switch (this.mimeType) {
       case 'text/plain':
         return ['text/plain'];
+      case 'text/markdown':
+        // Markdown can be served as markdown or converted to HTML
+        return ['text/markdown', 'text/html'];
       default:
         return [this.mimeType];
     }
@@ -92,7 +94,7 @@ class Fragment {
 
   static isSupportedType(value) {
     const { type } = contentType.parse(value);
-    return ['text/plain'].includes(type);
+    return ['text/plain', 'text/markdown'].includes(type);
   }
 }
 
