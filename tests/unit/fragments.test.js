@@ -1,79 +1,45 @@
 const request = require('supertest');
 
-// Mock the Fragment model with proper method implementations
-const mockFragment = {
-  id: 'test-id',
-  ownerId: 'testUser',
-  type: 'text/plain',
-  size: 9,
-  getData: jest.fn().mockResolvedValue(Buffer.from('test data')),
-  setData: jest.fn().mockResolvedValue(undefined),
-  save: jest.fn().mockResolvedValue(undefined),
-  destroy: jest.fn().mockResolvedValue(undefined)
-};
+// Mock the Fragment model: export a jest.fn constructor with static methods
+const MockFragmentCtor = jest.fn();
+MockFragmentCtor.byUser = jest.fn();
+MockFragmentCtor.byId = jest.fn();
+MockFragmentCtor.isSupportedType = jest.fn();
 
-// Create a mock Fragment class
-class MockFragment {
-  static byUser = jest.fn().mockResolvedValue([mockFragment]);
-  
-  static byId = jest.fn().mockImplementation((ownerId, id) => {
-    if (id === 'test-id') {
-      return Promise.resolve({
-        ...mockFragment,
-        getData: jest.fn().mockResolvedValue(Buffer.from('test data')),
-        ownerId: ownerId || 'testUser',
-        id: 'test-id'
-      });
-    }
-    const error = new Error('Fragment not found');
-    error.status = 404;
-    return Promise.reject(error);
-  });
-  
-  static isSupportedType = jest.fn().mockReturnValue(true);
-}
-
-// Mock the Fragment model
 jest.mock('../../src/model/fragment', () => ({
-  __esModule: true,
-  ...jest.requireActual('../../src/model/fragment'),
-  default: MockFragment,
-  ...MockFragment
+  Fragment: MockFragmentCtor,
 }));
 
 // Import the Fragment model after setting up the mock
 const { Fragment } = require('../../src/model/fragment');
 
-// Mock Passport
-const mockUser = { id: 'testUser', email: 'test@example.com' };
-
+// Mock Passport to set req.user as ownerId string 'testUser'
 jest.mock('passport', () => ({
   use: jest.fn(),
   initialize: jest.fn().mockReturnValue((req, res, next) => next()),
   authenticate: jest.fn().mockImplementation(() => (req, res, next) => {
-    req.user = mockUser;
+    req.user = 'testUser';
     return next();
-  })
+  }),
 }));
 
-// Mock basic auth
+// Mock basic auth to assign req.user as 'testUser'
 jest.mock('../../src/auth/basic-auth', () => ({
   strategy: jest.fn().mockImplementation(() => ({
     name: 'basic',
     authenticate: (req, res, next) => {
-      req.user = mockUser;
+      req.user = 'testUser';
       return next();
-    }
+    },
   })),
   authenticate: jest.fn().mockImplementation(() => (req, res, next) => {
-    req.user = mockUser;
+    req.user = 'testUser';
     return next();
-  })
+  }),
 }));
 
 // Import app after all mocks are set up
 const app = require('../../src/app');
-const { Fragment } = require('../../src/model/fragment');
 
 describe('Fragments API', () => {
   let server;
@@ -137,18 +103,14 @@ describe('Fragments API', () => {
     });
     
     test('should return 415 for unsupported media type', async () => {
-      // Mock the isSupportedType method to throw an error for unsupported types
-      Fragment.isSupportedType = jest.fn().mockImplementation(() => {
-        const error = new Error('Unsupported Media Type');
-        error.status = 415;
-        throw error;
-      });
-      
+      // For unsupported content type, isSupportedType should return false
+      Fragment.isSupportedType.mockReturnValue(false);
+
       const res = await request(server)
         .post('/v1/fragments')
         .set('Content-Type', 'application/unsupported')
         .send('test data');
-      
+
       expect(res.status).toBe(415);
       expect(res.body.error.message).toBe('Unsupported Media Type');
     });
@@ -199,7 +161,12 @@ describe('Fragments API', () => {
   describe('GET /v1/fragments/:id', () => {
     test('should return fragment data', async () => {
       const testData = Buffer.from('test data');
-      mockFragment.getData.mockResolvedValueOnce(testData);
+      Fragment.byId.mockResolvedValueOnce({
+        id: 'test-id',
+        ownerId: 'testUser',
+        type: 'text/plain',
+        getData: async () => testData,
+      });
       
       const res = await request(server)
         .get('/v1/fragments/test-id')

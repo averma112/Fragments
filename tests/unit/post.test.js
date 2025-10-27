@@ -11,7 +11,6 @@ describe('POST /fragments', () => {
   beforeEach(() => {
     app = express();
 
-    // mock user middleware
     app.use((req, res, next) => {
       req.user = 'test-user-id';
       next();
@@ -39,19 +38,15 @@ describe('POST /fragments', () => {
   });
 
   it('creates a fragment if content type is supported', async () => {
-    // Mock Fragment methods
     Fragment.prototype.save = jest.fn().mockResolvedValue();
     Fragment.prototype.setData = jest.fn().mockResolvedValue();
 
-    // Mock the static type check used by rawBody()
   Fragment.isSupportedType = jest.fn().mockReturnValue(true);
     const appWithUser = express();
-    // Set req.user as a string (ownerId)
     appWithUser.use((req, res, next) => {
       req.user = 'test@example.com';
       next();
     });
-    // appWithUser.use(router);
     appWithUser.use('/v1/fragments', router);
 
     const res = await request(appWithUser)

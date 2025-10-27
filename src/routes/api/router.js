@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const rawBody = require('express').raw; // if using inline raw parser
+const rawBody = require('express').raw; 
 const postHandler = require('./post');
 
 router.post('/fragments', rawBody({
