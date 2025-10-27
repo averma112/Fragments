@@ -1,40 +1,29 @@
-#All docker instructions for Lab 5
-FROM node:24.7.0
+# Stage 1: Build
+FROM node:24.7.0-slim AS build
 
-LABEL maintainer="Ashutosh Verma <averma112@myseneca.ca>"
-LABEL description="Fragments node.js microservice"
-
-# We default to use port 8080 in our service
-ENV PORT=8080
-
-# Reduce npm spam when installing within Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#loglevel
-ENV NPM_CONFIG_LOGLEVEL=warn
-
-# Disable colour when run inside Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#color
-ENV NPM_CONFIG_COLOR=false
-
-# Use /app as our working directory
 WORKDIR /app
-
-# Option 3: explicit filenames - Copy the package.json and package-lock.json
-# files into the working dir (/app), using full paths and multiple source
-# files.  All of the files will be copied into the working dir `./app`
-COPY package.json package-lock.json ./
-
-# Install node dependencies defined in package-lock.json
-RUN npm install
-
-# Copy src to /app/src/
+COPY package*.json ./
+RUN npm install     # Installs all dependencies (including devDeps)
 COPY ./src ./src
-
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
-# Start the container by running our server
-CMD npm start
+# Stage 2: Production
+FROM node:24.7.0-slim
 
-# We run our service on port 8080
+WORKDIR /app
+
+# Only copy required production files from the build stage
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/node_modules ./node_modules  
+COPY --from=build /app/src ./src
+COPY --from=build /app/tests/.htpasswd ./tests/.htpasswd
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# Use a non-root user for security
+RUN useradd -m appuser
+USER appuser
+
+CMD ["npm", "start"]
 EXPOSE 8080
-
-
