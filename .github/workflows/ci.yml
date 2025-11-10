@@ -26,10 +26,18 @@ jobs:
       env:
         NODE_ENV: test
     
+    - name: Create test environment file
+      run: |
+        echo "NODE_ENV=test" > .env.test
+        echo "PORT=8080" >> .env.test
+        echo "API_URL=http://localhost:8080" >> .env.test
+        echo "DB_FILE=:memory:" >> .env.test
+    
     - name: Run tests with coverage
       run: npm run coverage
       env:
         NODE_ENV: test
+        # Add any other required environment variables here
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
