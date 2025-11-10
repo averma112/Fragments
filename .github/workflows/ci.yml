@@ -40,11 +40,12 @@ jobs:
         # Add any other required environment variables here
     
     - name: Upload coverage to Codecov
+      if: success() && github.ref == 'refs/heads/main'  # Only run on main branch
+      continue-on-error: true  # Don't fail the build if Codecov fails
       uses: codecov/codecov-action@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN || '' }}
         file: ./coverage/lcov.info
-        fail_ci_if_error: true
 
   build-and-push:
     name: Build and Push Docker Image
