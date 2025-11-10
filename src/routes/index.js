@@ -14,7 +14,6 @@ router.use(`/v1`,authenticate() ,require('./api'));
 const { createSuccessResponse } = require('../response');
 
 router.get('/', (req, res) => {
-    console.log("In index")
   res.setHeader('Cache-Control', 'no-cache');
   res.status(200).json(createSuccessResponse({
     author,

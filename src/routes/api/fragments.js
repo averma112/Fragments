@@ -26,7 +26,9 @@ const rawBody = () =>
 router.get('/', async (req, res) => {
   try {
     const expand = req.query.expand === '1';
-    const fragments = await Fragment.byUser(req.user, expand);
+    if (!req.user) return res.status(401).json(createErrorResponse(401, 'Unauthorized'));
+const fragments = await Fragment.byUser(req.user, expand);
+
     res.status(200).json(createSuccessResponse({ fragments }));
   } catch (err) {
     log.error({ err }, 'Error getting fragments');
@@ -67,7 +69,10 @@ router.get('/:id.:ext', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const fragment = await Fragment.byId(req.user, req.params.id);
-    const data = await fragment.getData();
+if (!fragment) {
+  return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+}
+const data = await fragment.getData();
 
     res.set('Content-Type', fragment.type);
 

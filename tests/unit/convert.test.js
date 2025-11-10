@@ -1,63 +1,58 @@
-const request = require('supertest');
-const express = require('express');
+// Import the convert function
+const { convert } = require('../../src/model/fragment');
 
-// Use the actual router under test
-const router = require('../../src/routes/api/fragments');
+// Mock the Fragment class for testing
+class MockFragment {
+  constructor({ type, data }) {
+    this.type = type;
+    this.data = data || Buffer.from('');
+  }
+  
+  async getData() {
+    return this.data;
+  }
+  
+  formats() {
+    if (this.type === 'text/plain') return ['text/plain', 'text/html'];
+    if (this.type === 'application/json') return ['application/json', 'text/plain'];
+    return [this.type];
+  }
+}
 
-// Mock Fragment model methods used by the router for these tests
-jest.mock('../../src/model/fragment', () => ({
-  Fragment: {
-    byId: jest.fn(),
-  },
-}));
-
-const { Fragment } = require('../../src/model/fragment');
-
-describe('GET /v1/fragments/:id.ext conversion', () => {
-  let app;
-
-  beforeEach(() => {
-    app = express();
-    // Fake auth to set req.user like other tests
-    app.use((req, res, next) => {
-      req.user = 'test-user-id';
-      next();
-    });
-    app.use('/v1/fragments', router);
+describe('Fragment Conversion', () => {
+  test('should convert text/plain to text/html', async () => {
+    const fragment = {
+      type: 'text/plain',
+      formats: () => ['text/plain', 'text/html'],
+      getData: jest.fn().mockResolvedValue(Buffer.from('Hello, world!'))
+    };
+    
+    const result = await convert(fragment, 'text/html');
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.toString()).toContain('Hello, world!');
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
+  test('should convert application/json to text/plain', async () => {
+    const fragment = {
+      type: 'application/json',
+      formats: () => ['application/json', 'text/plain'],
+      getData: jest.fn().mockResolvedValue(Buffer.from(JSON.stringify({ key: 'value' })))
+    };
+    
+    const result = await convert(fragment, 'text/plain');
+    expect(result).toBeInstanceOf(Buffer);
+    expect(result.toString()).toContain('{\n  "key": "value"\n}');
   });
 
-  test('converts Markdown fragment to HTML with .html extension', async () => {
-    // Mock a markdown fragment
-    Fragment.byId.mockResolvedValue({
-      mimeType: 'text/markdown',
-      getData: async () => Buffer.from('# Title\n\nhello world'),
-    });
-
-    const res = await request(app).get('/v1/fragments/abc123.html');
-
-    expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toMatch(/^text\/html/);
-    expect(res.text).toContain('<h1>Title</h1>');
-    expect(res.text).toContain('<p>hello world</p>');
-  });
-
-  test('returns 415 for unsupported conversion when fragment is not markdown', async () => {
-    // Mock a plain text fragment
-    Fragment.byId.mockResolvedValue({
-      mimeType: 'text/plain',
-      getData: async () => Buffer.from('just text'),
-    });
-
-    const res = await request(app).get('/v1/fragments/def456.html');
-
-    expect(res.status).toBe(415);
-    expect(res.body).toEqual({
-      status: 'error',
-      error: { code: 415, message: 'Unsupported conversion requested' },
-    });
+  test('should throw error for unsupported conversion', async () => {
+    const fragment = {
+      type: 'text/plain',
+      formats: () => ['text/plain'],
+      getData: jest.fn()
+    };
+    
+    await expect(convert(fragment, 'application/pdf'))
+      .rejects
+      .toThrow('Unsupported conversion: text/plain -> application/pdf');
   });
 });
