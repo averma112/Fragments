@@ -28,16 +28,24 @@ jobs:
     
     - name: Create test environment file
       run: |
-        echo "NODE_ENV=test" > .env.test
-        echo "PORT=8080" >> .env.test
-        echo "API_URL=http://localhost:8080" >> .env.test
-        echo "DB_FILE=:memory:" >> .env.test
+        cat > .env.test << 'EOL'
+        NODE_ENV=test
+        PORT=8080
+        API_URL=http://localhost:8080
+        DB_FILE=:memory:
+        REDIS_URL=redis://localhost:6379
+        SESSION_SECRET=test-secret
+        EOL
+        cat .env.test  # Print the file for debugging
     
     - name: Run tests with coverage
       run: npm run coverage
       env:
         NODE_ENV: test
-        # Add any other required environment variables here
+        PORT: '8080'
+        DB_FILE: ':memory:'
+        REDIS_URL: 'redis://localhost:6379'
+        SESSION_SECRET: 'test-secret'
     
     - name: Upload coverage to Codecov
       if: success() && github.ref == 'refs/heads/main'  # Only run on main branch
