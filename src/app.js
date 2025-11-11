@@ -46,7 +46,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));  // ✅ USE ONLY THIS
-app.options("*", cors(corsOptions)); // ✅ IMPORTANT for preflight responses
+//app.options("*", cors(corsOptions)); // ✅ IMPORTANT for preflight responses
 // Use gzip/deflate compression middleware
 app.use(compression());
 
