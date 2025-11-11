@@ -25,7 +25,7 @@ const corsOptions = {
 
 // Apply CORS and preflight handler BEFORE routes
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // preflight responses
+//app.options('*', cors(corsOptions)); // preflight responses
 
 // Use compression and pino logging early
 app.use(compression());
