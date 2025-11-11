@@ -19,7 +19,7 @@ const pino = require('pino-http')({
 
 // Create an express app instance we can use to attach middleware and HTTP routes
 const app = express();
-app.use(cors({ origin: '*' }));
+//app.use(cors({ origin: '*' }));
 app.use(compression());
 
 // Set up our passport authentication middleware
@@ -35,8 +35,18 @@ app.use(pino);
 app.use(helmet());
 
 // Use CORS middleware so we can make requests across origins
-app.use(cors());
+//app.use(cors());
+const corsOptions = {
+  origin: (origin, callback) => {
+    callback(null, true); // Allow all origins
+  },
+  credentials: true,
+  allowedHeaders: ["Authorization", "Content-Type", "Accept"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+};
 
+app.use(cors(corsOptions));  // ✅ USE ONLY THIS
+app.options("*", cors(corsOptions)); // ✅ IMPORTANT for preflight responses
 // Use gzip/deflate compression middleware
 app.use(compression());
 
