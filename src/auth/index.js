@@ -8,6 +8,9 @@ if (
 ) {
   throw new Error('Only one auth method can be used at a time');
 }
+console.log('AUTH DEBUG – HTPASSWD_FILE=', process.env.HTPASSWD_FILE);
+console.log('AUTH DEBUG – COGNITO_POOL_ID=', process.env.AWS_COGNITO_POOL_ID);
+console.log('AUTH DEBUG – COGNITO_CLIENT_ID=', process.env.AWS_COGNITO_CLIENT_ID);
 
 // --------------------------
 // Test environment middleware
