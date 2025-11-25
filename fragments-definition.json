@@ -16,7 +16,7 @@
       "memory": 512,
       "memoryReservation": 512,
       "environment": [
-        {
+  {
     "name": "PORT",
     "value": "80"
   },
@@ -34,9 +34,8 @@
   },
   {
     "name": "AWS_S3_BUCKET_NAME",
-    "value": "averma112-fragments"   
+    "value": "averma112-fragments"
   },
-
   {
     "name": "AWS_COGNITO_POOL_ID",
     "value": "us-east-1_mWEmrcXtI"
