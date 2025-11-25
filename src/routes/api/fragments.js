@@ -64,7 +64,29 @@ router.get('/:id.:ext', async (req, res) => {
     }
   }
 });
+router.get('/:id/info', async (req, res) => {
+  try {
+    const id = req.params.id;
 
+    const fragment = await Fragment.byId(req.user, id);
+
+    if (!fragment) {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+
+    // Clone fragment metadata and remove any data field if present
+    const fragmentData = { ...fragment };
+    delete fragmentData.data;
+
+    return res.status(200).json(createSuccessResponse({ fragment: fragmentData }));
+  } catch (err) {
+    log.error({ err }, 'Error getting fragment metadata');
+    if (err.message === 'Fragment not found') {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+    return res.status(500).json(createErrorResponse(500, err.message));
+  }
+});
 // Fetch a fragment's original data by id
 router.get('/:id', async (req, res) => {
   try {
