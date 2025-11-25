@@ -14,9 +14,9 @@ const app = express();
 // --- CORS: echo origin (DO NOT use '*' with credentials) ---
 const corsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (e.g. curl, server-to-server)
+    // allow requests with no origin (e.g. mobile apps, curl, server-side)
     if (!origin) return callback(null, true);
-    return callback(null, true); // echo origin back (allow all origins)
+    callback(null, true);  // allow all origins
   },
   credentials: true,
   allowedHeaders: ['Authorization', 'Content-Type', 'Accept'],
