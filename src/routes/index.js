@@ -1,7 +1,7 @@
 // src/routes/index.js
 
 const express = require('express');
-
+const { hostname } = require('os');
 const { version, author } = require('../../package.json');
 
 const router = express.Router();
@@ -18,7 +18,8 @@ router.get('/', (req, res) => {
   res.status(200).json(createSuccessResponse({
     author,
     githubUrl: 'https://github.com/averma112/fragments',
-    version,                                             
+    version,         
+    hostname: hostname(),                                    
   }));
 });
 
