@@ -15,7 +15,22 @@
       "cpu": 256,
       "memory": 512,
       "memoryReservation": 512,
-      "environment": [],
+      "environment": [{
+    "name": "PORT",
+    "value": "80"
+  },
+  {
+    "name": "LOG_LEVEL",
+    "value": "info"
+  },
+  {
+    "name": "NODE_ENV",
+    "value": "production"
+  },
+  {
+    "name": "OAUTH_REDIRECT_URL",
+    "value": "http://localhost:1234"
+  }],
       "environmentFiles": [],
       "mountPoints": [],
       "portMappings": [
