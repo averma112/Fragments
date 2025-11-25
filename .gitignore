@@ -137,3 +137,13 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+.DS_Store
+AWSCLIV2.pkg
+__mocks__/
+demo.py
+errro.txt
+src/model/data/aws/
+src/routes/.DS_Store
+src/routes/api/.DS_Store
+tests/unit/.DS_Store

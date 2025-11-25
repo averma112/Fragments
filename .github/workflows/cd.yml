@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -40,8 +41,11 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Debug – list workspace files
-      run: ls -R .
+    - name: Debug – show task def
+      run: |
+        ls -l fragments-definition.json || true
+        head -n 80 fragments-definition.json || true
+        jq '.containerDefinitions | length' fragments-definition.json || true
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: update-task-def
