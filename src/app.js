@@ -5,12 +5,14 @@ const helmet = require('helmet');
 const compression = require('compression');
 const passport = require('passport');
 const authenticate = require('./auth');
+require('dotenv').config();
 
 const logger = require('./logger');
 const pino = require('pino-http')({ logger });
 
 const app = express();
-
+const debugS3 = require('./routes/debug-s3');
+app.use(debugS3);
 // --- CORS: echo origin (DO NOT use '*' with credentials) ---
 const corsOptions = {
   origin: (origin, callback) => {
