@@ -125,4 +125,36 @@ router.post('/', rawBody(), async (req, res) => {
   }
 });
 
+// Delete a fragment by id
+router.delete('/:id', async (req, res) => {
+  try {
+    // Make sure the user is authenticated
+    if (!req.user) {
+      return res.status(401).json(createErrorResponse(401, 'Unauthorized'));
+    }
+
+    const id = req.params.id;
+
+    // Try to get the fragment for this user + id
+    const fragment = await Fragment.byId(req.user, id);
+
+    // If Fragment.byId returns null/undefined (depending on your implementation)
+    if (!fragment) {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+
+    // Delete the fragment (this should remove metadata + data via your data layer)
+    await fragment.delete();
+
+    // Lab/spec expects 200 OK on successful delete
+    return res.status(200).json(createSuccessResponse());
+  } catch (err) {
+    log.error({ err }, 'Error deleting fragment');
+    if (err.message === 'Fragment not found') {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+    return res.status(500).json(createErrorResponse(500, err.message));
+  }
+});
+
 module.exports = router;

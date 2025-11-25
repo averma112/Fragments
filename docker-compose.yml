@@ -12,9 +12,10 @@ services:
     environment:
             # Our API will be running on http://localhost:8080
             - API_URL=http://localhost:8080
-            # Use Basic Auth (for running tests, CI)
+            # Use Cognito auth
             - NODE_ENV=development
-            - HTPASSWD_FILE=/usr/src/app/.htpasswd
+            - AWS_COGNITO_POOL_ID=${AWS_COGNITO_POOL_ID}
+            - AWS_COGNITO_CLIENT_ID=${AWS_COGNITO_CLIENT_ID}
             # Use the LOG_LEVEL set in the host environment, or default to info
             - LOG_LEVEL=${LOG_LEVEL:-info}
             - AWS_REGION=us-east-1
