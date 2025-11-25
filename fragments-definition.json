@@ -15,7 +15,8 @@
       "cpu": 256,
       "memory": 512,
       "memoryReservation": 512,
-      "environment": [{
+      "environment": [
+        {
     "name": "PORT",
     "value": "80"
   },
@@ -28,9 +29,31 @@
     "value": "production"
   },
   {
+    "name": "AWS_REGION",
+    "value": "us-east-1"
+  },
+  {
+    "name": "AWS_S3_BUCKET_NAME",
+    "value": "averma112-fragments"   
+  },
+
+  {
+    "name": "AWS_COGNITO_POOL_ID",
+    "value": "us-east-1_mWEmrcXtI"
+  },
+  {
+    "name": "AWS_COGNITO_CLIENT_ID",
+    "value": "8o2l6geft81bg9dajjaqtuicj"
+  },
+  {
+    "name": "AWS_COGNITO_DOMAIN",
+    "value": "averma112-fragments.auth.us-east-1.amazoncognito.com"
+  },
+  {
     "name": "OAUTH_REDIRECT_URL",
     "value": "http://localhost:1234"
-  }],
+  }
+],
       "environmentFiles": [],
       "mountPoints": [],
       "portMappings": [
