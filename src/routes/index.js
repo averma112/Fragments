@@ -18,7 +18,6 @@ router.get('/', (req, res) => {
   res.status(200).json(createSuccessResponse({
     author,
     githubUrl: 'https://github.com/averma112/fragments',
-    hostname: hostname(), 
     version,                                             
   }));
 });

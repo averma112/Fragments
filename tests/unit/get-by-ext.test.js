@@ -1,6 +1,5 @@
-import request from 'supertest';
-import app from '../../app.js';
-
+const request = require('supertest');
+const app = require('../../src/app');
 // If you already have a helper for test JWTs, import it here instead
 const TEST_TOKEN = 'test-token';
 
