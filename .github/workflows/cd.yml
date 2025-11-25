@@ -25,7 +25,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: us-east-1
-
+    - name: Debug AWS creds length
+      run: |
+        echo "AWS_ACCESS_KEY_ID length: ${#AWS_ACCESS_KEY_ID}"
+        echo "AWS_SECRET_ACCESS_KEY length: ${#AWS_SECRET_ACCESS_KEY}"
+        echo "AWS_SESSION_TOKEN length: ${#AWS_SESSION_TOKEN}"
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
