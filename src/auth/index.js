@@ -52,9 +52,12 @@ if (process.env.NODE_ENV === 'test') {
         return res.status(401).json({ status: 'error', error: { message: 'Unauthorized' } });
       }
 
-      if (creds.user === 'test@example.com' && creds.pass === 'password') {
-        // tests expect req.user === 'testUser'
-        req.user = 'testUser';
+      if (
+        (creds.user === 'test@example.com' && creds.pass === 'password') ||
+        (creds.user === 'user1@email.com' && creds.pass === 'password1')
+      ) {
+        // For integration tests, allow ownerId to be the email when requested
+        req.user = process.env.TEST_AUTH_USER_AS_EMAIL === '1' ? creds.user : 'testUser';
         return next();
       }
 

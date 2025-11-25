@@ -4,6 +4,7 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
+  "ipcMode": null,
   "executionRoleArn": "arn:aws:iam::637423452839:role/LabRole",
   "taskRoleArn": "arn:aws:iam::637423452839:role/LabRole",
   "containerDefinitions": [
