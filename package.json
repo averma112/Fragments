@@ -1,6 +1,5 @@
 {
   "name": "fragments",
-  "type": "module",
   "private": true,
   "version": "0.7.1",
   "description": "Fragments back-end API",

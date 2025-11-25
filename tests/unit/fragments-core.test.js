@@ -1,5 +1,5 @@
-import request from 'supertest';
-import app from '../../app.js';
+const request = require('supertest');
+const app = require('../../app.js');
 
 const TEST_TOKEN = 'test-token';
 
