@@ -1,7 +1,7 @@
 {
   "name": "fragments",
   "private": true,
-  "version": "0.9.6",
+  "version": "0.9.8",
   "description": "Fragments back-end API",
   "scripts": {
     "test:watch": "env-cmd -f .env.test jest -c jest.config.js --runInBand --watch --",
