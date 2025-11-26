@@ -8,6 +8,7 @@
 // and keeps tests deterministic. If you need filesystem persistence later, we can adapt it.
 
 const { randomUUID } = require('crypto');
+const store = require('./data');
 
 const SUPPORTED_TYPES = [
   'application/json',
@@ -75,8 +76,7 @@ class Fragment {
   async save() {
     // store metadata in the static store
     this.updated = new Date().toISOString();
-    Fragment._ensureOwnerMap(this.ownerId);
-    Fragment._fragmentsByOwner.get(this.ownerId).set(this.id, this);
+    await store.writeFragment(this);
     return;
   }
 
@@ -86,26 +86,22 @@ class Fragment {
       err.statusCode = 400;
       throw err;
     }
-    Fragment._ensureOwnerMap(this.ownerId);
-    Fragment._dataByOwner.get(this.ownerId).set(this.id, Buffer.from(buffer));
+    await store.writeFragmentData(this.ownerId, this.id, buffer);
     this.size = buffer.length;
     this.updated = new Date().toISOString();
     // update stored metadata reference
-    Fragment._fragmentsByOwner.get(this.ownerId).set(this.id, this);
+    await store.writeFragment(this);
     return;
   }
 
   async getData() {
-    Fragment._ensureOwnerMap(this.ownerId);
-    const buf = Fragment._dataByOwner.get(this.ownerId).get(this.id);
+    const buf = await store.readFragmentData(this.ownerId, this.id);
     if (!buf) return null;
-    return Buffer.from(buf);
+    return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
   }
 
   async delete() {
-    Fragment._ensureOwnerMap(this.ownerId);
-    Fragment._dataByOwner.get(this.ownerId).delete(this.id);
-    Fragment._fragmentsByOwner.get(this.ownerId).delete(this.id);
+    await store.deleteFragment(this.ownerId, this.id);
     return;
   }
 
@@ -129,28 +125,30 @@ class Fragment {
   // Return metadata array (not the buffers). If expand=true return full fragment objects (incl. size, dates).
   // Tests generally call Fragment.byUser(ownerId) and expect [] when none exist.
   static async byUser(ownerId, expand = false) {
-    Fragment._ensureOwnerMap(ownerId);
-    const map = Fragment._fragmentsByOwner.get(ownerId);
-    if (!map || map.size === 0) return [];
-    const results = Array.from(map.values());
-    if (expand) {
-      // return clones to avoid accidental mutation
-      return results.map((f) => ({ ...f }));
-    }
-    // return ids only
-    return results.map((f) => f.id);
+  const results = await store.listFragments(ownerId, expand);
+  if (!results) return [];
+  
+  if (expand) {
+    // If results are strings, parse them
+    const fragments = results.map(item => 
+      typeof item === 'string' ? new Fragment(JSON.parse(item)) : item
+    );
+    return fragments;
   }
+  
+  return results;
+}
 
   // Return a Fragment instance (not a raw metadata object). If not found, throw (tests expect this in some cases).
   static async byId(ownerId, id) {
-    Fragment._ensureOwnerMap(ownerId);
-    const map = Fragment._fragmentsByOwner.get(ownerId);
-    if (!map.has(id)) {
+    const obj = await store.readFragment(ownerId, id);
+    if (!obj) {
       const err = new Error('Fragment not found');
       err.statusCode = 404;
       throw err;
     }
-    return map.get(id);
+    // Convert raw object into a Fragment instance
+    return new Fragment(obj);
   }
 
   // check supported content types
