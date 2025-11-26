@@ -67,6 +67,10 @@ jobs:
         environment-variables: |
           LOG_LEVEL=info
           NODE_ENV=production
+          AWS_REGION=us-east-1
+          AWS_S3_BUCKET_NAME=averma112-fragments
+          AWS_COGNITO_POOL_ID=us-east-1_mWEmrcXtI
+          AWS_COGNITO_CLIENT_ID=8o2l6geft81bg9dajjaqtuicj
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
