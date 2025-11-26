@@ -125,9 +125,19 @@ class Fragment {
   // Return metadata array (not the buffers). If expand=true return full fragment objects (incl. size, dates).
   // Tests generally call Fragment.byUser(ownerId) and expect [] when none exist.
   static async byUser(ownerId, expand = false) {
-    const results = await store.listFragments(ownerId, expand);
-    return results || [];
+  const results = await store.listFragments(ownerId, expand);
+  if (!results) return [];
+  
+  if (expand) {
+    // If results are strings, parse them
+    const fragments = results.map(item => 
+      typeof item === 'string' ? new Fragment(JSON.parse(item)) : item
+    );
+    return fragments;
   }
+  
+  return results;
+}
 
   // Return a Fragment instance (not a raw metadata object). If not found, throw (tests expect this in some cases).
   static async byId(ownerId, id) {
