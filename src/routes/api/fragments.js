@@ -7,19 +7,13 @@ const router = express.Router();
 const MarkdownIt = require('markdown-it');
 const md = new MarkdownIt();
 
+// Raw body middleware - parse body for all requests so we can validate and return proper errors
 const rawBody = () =>
   express.raw({
     inflate: true,
     limit: '5mb',
-    type: (req) => {
-      const typeHeader = req.headers['content-type'];
-      if (!typeHeader) return false;
-      try {
-        return Fragment.isSupportedType(typeHeader);
-      } catch {
-        return false;
-      }
-    },
+    // Always parse the body - we'll validate content type in the route handler
+    type: '*/*',
   });
 
 // List fragments (supports expand=1)
@@ -114,18 +108,25 @@ router.post('/', rawBody(), async (req, res) => {
     const ownerId = req.user;
     const typeHeader = req.headers['content-type'];
 
+    log.debug({ ownerId, typeHeader, hasBody: !!req.body, bodyType: typeof req.body }, 'POST /fragments request received');
+
     if (!ownerId) {
+      log.warn('POST /fragments: No ownerId (req.user is missing)');
       return res.status(401).json(createErrorResponse(401, 'Unauthorized'));
     }
 
     if (!typeHeader || !Fragment.isSupportedType(typeHeader)) {
+      log.warn({ typeHeader }, 'POST /fragments: Unsupported content type');
       return res.status(415).json(createErrorResponse(415, 'Unsupported Media Type'));
     }
 
     const data = req.body;
     if (!Buffer.isBuffer(data)) {
+      log.warn({ bodyType: typeof data, isBuffer: Buffer.isBuffer(data) }, 'POST /fragments: Request body is not a Buffer');
       return res.status(400).json(createErrorResponse(400, 'Request body must be raw data'));
     }
+
+    log.debug({ ownerId, type: typeHeader, size: data.length }, 'Creating fragment');
 
     const fragment = new Fragment({
       ownerId,
@@ -133,17 +134,24 @@ router.post('/', rawBody(), async (req, res) => {
       size: data.length,
     });
 
+    log.debug({ fragmentId: fragment.id }, 'Fragment created, saving metadata');
     await fragment.save();
+    
+    log.debug({ fragmentId: fragment.id }, 'Saving fragment data');
     await fragment.setData(data);
 
-    res.set('Location', `${process.env.API_URL}/v1/fragments/${fragment.id}`);
+    const location = `${process.env.API_URL || 'http://localhost:8080'}/v1/fragments/${fragment.id}`;
+    res.set('Location', location);
 
     const fragmentData = { ...fragment };
     delete fragmentData.data;
+    
+    log.debug({ fragmentId: fragment.id }, 'Fragment created successfully');
     res.status(201).json(createSuccessResponse({ fragment: fragmentData }));
   } catch (err) {
-    log.error({ err }, 'Error creating fragment');
-    res.status(500).json(createErrorResponse(500, err.message));
+    log.error({ err, stack: err.stack, message: err.message }, 'Error creating fragment');
+    const errorMessage = err.message || 'Internal Server Error';
+    res.status(500).json(createErrorResponse(500, errorMessage));
   }
 });
 
