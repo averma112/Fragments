@@ -9,12 +9,12 @@
 // - deleteFragment(ownerId, id)
 
 const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const { fromIni } = require('@aws-sdk/credential-provider-ini');
+//const { fromIni } = require('@aws-sdk/credential-provider-ini');
 const logger = require('../../logger');
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
-  credentials: fromIni({ profile: 'default' })
+  //credentials: fromIni({ profile: 'default' })
 });
 
 const Bucket = process.env.AWS_S3_BUCKET_NAME;
