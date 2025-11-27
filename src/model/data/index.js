@@ -16,7 +16,7 @@ if (useS3) {
     },
     'Using AWS S3 data store'
   );
-  store = require('./aws');
+  store = require('./aws.js');
 } else {
   logger.info(
     {
