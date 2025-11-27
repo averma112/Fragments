@@ -6,7 +6,7 @@ let store;
 // Decide based on env vars
 // Use S3 only if both AWS_REGION and AWS_S3_BUCKET_NAME are set
 // For local development without valid AWS credentials, unset AWS_S3_BUCKET_NAME to use in-memory store
-const useS3 = process.env.AWS_REGION && process.env.AWS_S3_BUCKET_NAME;
+const useS3 = process.env.NODE_ENV !== 'test' && process.env.AWS_REGION && process.env.AWS_S3_BUCKET_NAME;
 
 if (useS3) {
   logger.info(
