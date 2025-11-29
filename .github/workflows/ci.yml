@@ -48,8 +48,8 @@ jobs:
           SESSION_SECRET: 'test-secret'
     
       - name: Upload coverage to Codecov
-        if: success() && github.ref == 'refs/heads/main'  # Only run on main branch
-        continue-on-error: true  # Don't fail the build if Codecov fails
+        if: success() && github.ref == 'refs/heads/main'
+        continue-on-error: true
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN || '' }}
@@ -70,19 +70,16 @@ jobs:
           cache: 'npm'
 
       - name: Install node dependencies
-        # Need dev deps too so hurl script exists
         run: npm install
 
-      - name: Install AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+      # (Optional) Verify awscli is available on the runner
+      - name: Check AWS CLI version
+        run: aws --version
 
       - name: Install Hurl
         run: |
           HURL_VERSION=5.0.1
           curl -LO https://github.com/Orange-OpenSource/hurl/releases/download/${HURL_VERSION}/hurl_${HURL_VERSION}_amd64.deb
-          sudo apt-get update
           sudo dpkg -i hurl_${HURL_VERSION}_amd64.deb || sudo apt-get -f install -y
 
       - name: Build and start containers (fragments + localstack + dynamodb-local)
