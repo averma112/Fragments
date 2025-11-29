@@ -12,52 +12,51 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
     
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-        cache: 'npm'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
     
-    - name: Install dependencies
-      run: npm ci
-      env:
-        NODE_ENV: test
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_ENV: test
     
-    - name: Create test environment file
-      run: |
-        cat > .env.test << 'EOL'
-        NODE_ENV=test
-        PORT=8080
-        API_URL=http://localhost:8080
-        DB_FILE=:memory:
-        REDIS_URL=redis://localhost:6379
-        SESSION_SECRET=test-secret
-        EOL
-        cat .env.test  # Print the file for debugging
+      - name: Create test environment file
+        run: |
+          cat > .env.test << 'EOL'
+          NODE_ENV=test
+          PORT=8080
+          API_URL=http://localhost:8080
+          DB_FILE=:memory:
+          REDIS_URL=redis://localhost:6379
+          SESSION_SECRET=test-secret
+          EOL
+          cat .env.test  # Print the file for debugging
     
-    - name: Run tests with coverage
-      run: npm run coverage
-      env:
-        NODE_ENV: test
-        PORT: '8080'
-        DB_FILE: ':memory:'
-        REDIS_URL: 'redis://localhost:6379'
-        SESSION_SECRET: 'test-secret'
+      - name: Run tests with coverage
+        run: npm run coverage
+        env:
+          NODE_ENV: test
+          PORT: '8080'
+          DB_FILE: ':memory:'
+          REDIS_URL: 'redis://localhost:6379'
+          SESSION_SECRET: 'test-secret'
     
-    - name: Upload coverage to Codecov
-      if: success() && github.ref == 'refs/heads/main'
-      continue-on-error: true
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN || '' }}
-        file: ./coverage/lcov.info
+      - name: Upload coverage to Codecov
+        if: success() && github.ref == 'refs/heads/main'  # Only run on main branch
+        continue-on-error: true  # Don't fail the build if Codecov fails
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN || '' }}
+          file: ./coverage/lcov.info
 
-  # 🔹 New job: run docker-compose + LocalStack + DynamoDB Local + Hurl
   integration-tests:
-    name: Integration Tests (LocalStack + DynamoDB)
+    name: Integration Tests (Docker + LocalStack + DynamoDB Local)
     runs-on: ubuntu-latest
 
     steps:
@@ -70,61 +69,69 @@ jobs:
           node-version: '18.x'
           cache: 'npm'
 
-      - name: Install Node dependencies
-        run: npm ci
+      - name: Install node dependencies
+        # Need dev deps too so hurl script exists
+        run: npm install
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
 
       - name: Install Hurl
         run: |
+          HURL_VERSION=5.0.1
+          curl -LO https://github.com/Orange-OpenSource/hurl/releases/download/${HURL_VERSION}/hurl_${HURL_VERSION}_amd64.deb
           sudo apt-get update
-          sudo apt-get install -y hurl
+          sudo dpkg -i hurl_${HURL_VERSION}_amd64.deb || sudo apt-get -f install -y
 
-      - name: Build and start docker-compose stack
+      - name: Build and start containers (fragments + localstack + dynamodb-local)
         run: docker compose up --build -d
 
-      - name: Setup Local AWS resources (S3 + DynamoDB)
+      - name: Setup Local AWS Resources (S3 bucket + DynamoDB table)
         run: ./scripts/local-aws-setup.sh
 
-      - name: Run integration tests (Hurl)
+      - name: Run Hurl integration tests
         run: npm run test:integration
 
-      - name: Tear down docker-compose stack
+      - name: Tear down containers
         if: always()
         run: docker compose down
 
   build-and-push:
     name: Build and Push Docker Image
-    needs: [test, integration-tests]   # ⬅️ now waits for tests + integration tests
+    needs: [test, integration-tests]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
     
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
     
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
     
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ secrets.DOCKERHUB_USERNAME }}/fragments
-        tags: |
-          type=raw,value=latest
-          type=sha,format=long
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/fragments
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
     
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
