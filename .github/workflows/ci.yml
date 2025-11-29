@@ -48,16 +48,52 @@ jobs:
         SESSION_SECRET: 'test-secret'
     
     - name: Upload coverage to Codecov
-      if: success() && github.ref == 'refs/heads/main'  # Only run on main branch
-      continue-on-error: true  # Don't fail the build if Codecov fails
+      if: success() && github.ref == 'refs/heads/main'
+      continue-on-error: true
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN || '' }}
         file: ./coverage/lcov.info
 
+  # 🔹 New job: run docker-compose + LocalStack + DynamoDB Local + Hurl
+  integration-tests:
+    name: Integration Tests (LocalStack + DynamoDB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Hurl
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hurl
+
+      - name: Build and start docker-compose stack
+        run: docker compose up --build -d
+
+      - name: Setup Local AWS resources (S3 + DynamoDB)
+        run: ./scripts/local-aws-setup.sh
+
+      - name: Run integration tests (Hurl)
+        run: npm run test:integration
+
+      - name: Tear down docker-compose stack
+        if: always()
+        run: docker compose down
+
   build-and-push:
     name: Build and Push Docker Image
-    needs: test
+    needs: [test, integration-tests]   # ⬅️ now waits for tests + integration tests
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     

@@ -11,7 +11,7 @@
     "start": "node src/index.js",
     "dev": "LOG_LEVEL=debug nodemon ./src/index.js --watch src",
     "debug": "LOG_LEVEL=debug nodemon --inspect=0.0.0.0:9229 ./src/index.js --watch src",
-    "test:integration": "hurl --test --glob \"tests/integration/**/*.hurl\""
+    "test:integration": "hurl --test tests/integration/*.hurl"
   },
   "repository": {
     "type": "git",
@@ -31,7 +31,9 @@
     "supertest": "^7.1.4"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.940.0",
     "@aws-sdk/client-s3": "^3.939.0",
+    "@aws-sdk/lib-dynamodb": "^3.940.0",
     "aws-jwt-verify": "^5.1.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
