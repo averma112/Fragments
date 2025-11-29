@@ -25,6 +25,9 @@ bti-525-key-pair.pem
 # nyc test coverage
 .nyc_output
 
+tests/.htpasswd 
+
+logs.txt
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
@@ -146,4 +149,7 @@ errro.txt
 src/model/data/aws/
 src/routes/.DS_Store
 src/routes/api/.DS_Store
-tests/unit/.DS_Store
+tests/unit/.DS_Storelogs.txt
+setupTests.js
+tests/aws-mock-helper.js
+tests/setup-tests.js

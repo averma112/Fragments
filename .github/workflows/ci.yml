@@ -75,10 +75,9 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Install Hurl
+      - name: Install Hurl (official installer)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y hurl
+          curl -sSfL https://hurl.dev/install.sh | sudo bash
 
       - name: Install AWS CLI (via pip)
         run: |
