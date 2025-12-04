@@ -1,14 +1,13 @@
 import express from 'express';
-import MarkdownIt from 'markdown-it';
 import { Fragment } from '../../model/fragment.js';
 import { authenticate } from '../../auth/middleware.js';
+import { isValidConversion, convertFragment } from '../../model/conversions.js';
 
 const router = express.Router();
-const md = new MarkdownIt();
 
 /**
  * GET /v1/fragments/:id.ext
- * - Support Markdown -> HTML only (Assignment 2)
+ * - Support all conversions (Assignment 3)
  */
 router.get('/v1/fragments/:id.:ext', authenticate, async (req, res) => {
   try {
@@ -20,20 +19,35 @@ router.get('/v1/fragments/:id.:ext', authenticate, async (req, res) => {
       return res.status(404).json({ status: 'error', error: 'Fragment not found' });
     }
 
-    if (ext === 'html') {
-      if (!fragment.type.startsWith('text/markdown')) {
-        return res.status(415).json({ status: 'error', error: 'Unsupported conversion' });
-      }
-      const data = await fragment.getData();
-      const html = md.render(data.toString());
-      res.set('Content-Type', 'text/html; charset=utf-8').status(200).send(html);
-      return;
+    const toExt = `.${ext}`;
+    
+    // Check if conversion is valid
+    if (!isValidConversion(fragment.type, toExt)) {
+      return res.status(415).json({ 
+        status: 'error', 
+        error: { message: 'Unsupported conversion' }
+      });
     }
 
-    res.status(415).json({ status: 'error', error: 'Unsupported extension' });
+    // Get fragment data
+    const data = await fragment.getData();
+    
+    // Convert the fragment
+    const { data: convertedData, contentType } = await convertFragment(
+      data, 
+      fragment.type, 
+      toExt
+    );
+
+    // Send converted data with appropriate content type
+    res.set('Content-Type', contentType).status(200).send(convertedData);
+
   } catch (err) {
     console.error('Error in /v1/fragments/:id.ext:', err);
-    res.status(500).json({ status: 'error', error: 'Internal server error' });
+    res.status(500).json({ 
+      status: 'error', 
+      error: { message: err.message || 'Internal server error' }
+    });
   }
 });
 
