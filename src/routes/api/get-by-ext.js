@@ -1,7 +1,7 @@
-import express from 'express';
-import { Fragment } from '../../model/fragment.js';
-import { authenticate } from '../../auth/middleware.js';
-import { isValidConversion, convertFragment } from '../../model/conversions.js';
+const express = require('express');
+const { Fragment } = require('../../model/fragment.js');
+const { authenticate } = require('../../auth/middleware.js');
+const { isValidConversion, convertFragment } = require('../../model/conversions.js');
 
 const router = express.Router();
 
@@ -51,4 +51,4 @@ router.get('/v1/fragments/:id.:ext', authenticate, async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
