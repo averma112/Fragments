@@ -1,5 +1,11 @@
 # Use the official Node.js 18 image as the base image
-FROM node:18-alpine
+# Using debian-slim instead of alpine for better sharp/libvips support
+FROM node:18-slim
+
+# Install dependencies for sharp (including AVIF support)
+RUN apt-get update && apt-get install -y \
+    libvips-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /usr/src/app

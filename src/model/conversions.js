@@ -150,27 +150,39 @@ async function convertFragment(data, fromType, toExt) {
 
   // Image conversions using sharp
   if (baseType.startsWith('image/')) {
-    let sharpImage = sharp(data);
-    
-    if (toExt === '.png') {
-      const converted = await sharpImage.png().toBuffer();
-      return { data: converted, contentType: 'image/png' };
-    }
-    if (toExt === '.jpg' || toExt === '.jpeg') {
-      const converted = await sharpImage.jpeg().toBuffer();
-      return { data: converted, contentType: 'image/jpeg' };
-    }
-    if (toExt === '.webp') {
-      const converted = await sharpImage.webp().toBuffer();
-      return { data: converted, contentType: 'image/webp' };
-    }
-    if (toExt === '.gif') {
-      const converted = await sharpImage.gif().toBuffer();
-      return { data: converted, contentType: 'image/gif' };
-    }
-    if (toExt === '.avif') {
-      const converted = await sharpImage.avif().toBuffer();
-      return { data: converted, contentType: 'image/avif' };
+    try {
+      let sharpImage = sharp(data);
+      
+      if (toExt === '.png') {
+        const converted = await sharpImage.png().toBuffer();
+        return { data: converted, contentType: 'image/png' };
+      }
+      if (toExt === '.jpg' || toExt === '.jpeg') {
+        const converted = await sharpImage.jpeg().toBuffer();
+        return { data: converted, contentType: 'image/jpeg' };
+      }
+      if (toExt === '.webp') {
+        const converted = await sharpImage.webp().toBuffer();
+        return { data: converted, contentType: 'image/webp' };
+      }
+      if (toExt === '.gif') {
+        const converted = await sharpImage.gif().toBuffer();
+        return { data: converted, contentType: 'image/gif' };
+      }
+      if (toExt === '.avif') {
+        // AVIF requires libheif - check if available
+        try {
+          const converted = await sharpImage.avif({ quality: 80 }).toBuffer();
+          return { data: converted, contentType: 'image/avif' };
+        } catch (avifError) {
+          // Fall back to WebP if AVIF encoding fails
+          console.warn('AVIF encoding not available, falling back to WebP:', avifError.message);
+          const converted = await sharpImage.webp({ quality: 80 }).toBuffer();
+          return { data: converted, contentType: 'image/webp' };
+        }
+      }
+    } catch (imageError) {
+      throw new Error(`Image conversion failed: ${imageError.message}`);
     }
   }
 
