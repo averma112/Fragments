@@ -3,8 +3,11 @@
 FROM node:18-slim
 
 # Install dependencies for sharp (including AVIF support)
+# Adding build-essential for compilation and runtime dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
     libvips-dev \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
