@@ -2,10 +2,9 @@ const express = require('express');
 const { Fragment } = require('../../model/fragment');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
 const log = require('../../logger');
+const { isValidConversion, convertFragment } = require('../../model/conversions');
 
 const router = express.Router();
-const MarkdownIt = require('markdown-it');
-const md = new MarkdownIt();
 
 // Raw body middleware - parse body for all requests so we can validate and return proper errors
 const rawBody = () =>
@@ -30,29 +29,39 @@ const fragments = await Fragment.byUser(req.user, expand);
   }
 });
 
-// Return a fragment converted to a supported extension, e.g., Markdown to HTML
+// Return a fragment converted to a supported extension
 router.get('/:id.:ext', async (req, res) => {
   try {
     const { id, ext } = req.params;
-    const fragment = await Fragment.byId(req.user, id);
-    const data = await fragment.getData();
+    const extWithDot = `.${ext}`;
+    
+    log.debug({ id, ext: extWithDot }, 'GET /:id.:ext request received');
 
-    // Only support Markdown (.md) to HTML (.html) for now
-    if (ext === 'html' && fragment.mimeType === 'text/markdown') {
-      const source = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
-      const html = md.render(source);
-      res.set('Content-Type', 'text/html');
-      return res.status(200).send(html);
+    const fragment = await Fragment.byId(req.user, id);
+    
+    // Check if conversion is valid
+    if (!isValidConversion(fragment.type, extWithDot)) {
+      log.warn({ fromType: fragment.type, toExt: extWithDot }, 'Invalid conversion requested');
+      return res.status(415).json(createErrorResponse(415, 'Unsupported conversion'));
     }
 
-    // Unsupported conversion requested
-    return res
-      .status(415)
-      .json(createErrorResponse(415, 'Unsupported conversion requested'));
+    const data = await fragment.getData();
+    
+    // Perform conversion
+    const { data: convertedData, contentType } = await convertFragment(
+      data,
+      fragment.type,
+      extWithDot
+    );
+
+    res.set('Content-Type', contentType);
+    return res.status(200).send(convertedData);
   } catch (err) {
     log.error({ err }, 'Error converting fragment');
     if (err.message === 'Fragment not found') {
       res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    } else if (err.message === 'Unsupported conversion') {
+      res.status(415).json(createErrorResponse(415, 'Unsupported conversion'));
     } else {
       res.status(500).json(createErrorResponse(500, err.message));
     }
@@ -152,6 +161,61 @@ router.post('/', rawBody(), async (req, res) => {
     log.error({ err, stack: err.stack, message: err.message }, 'Error creating fragment');
     const errorMessage = err.message || 'Internal Server Error';
     res.status(500).json(createErrorResponse(500, errorMessage));
+  }
+});
+
+// Update a fragment by id
+router.put('/:id', rawBody(), async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json(createErrorResponse(401, 'Unauthorized'));
+    }
+
+    const id = req.params.id;
+    const typeHeader = req.headers['content-type'];
+
+    log.debug({ ownerId: req.user, id, typeHeader }, 'PUT /fragments/:id request received');
+
+    // Check if fragment exists
+    const fragment = await Fragment.byId(req.user, id);
+    if (!fragment) {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+
+    // Validate content type matches existing fragment type
+    if (!typeHeader || !Fragment.isSupportedType(typeHeader)) {
+      return res.status(400).json(createErrorResponse(400, 'Invalid Content-Type'));
+    }
+
+    // Check if content type matches the fragment's type (cannot change type)
+    const newBaseType = typeHeader.split(';')[0].trim().toLowerCase();
+    const existingBaseType = fragment.type.split(';')[0].trim().toLowerCase();
+    
+    if (newBaseType !== existingBaseType) {
+      return res.status(400).json(createErrorResponse(400, 'Cannot change fragment type'));
+    }
+
+    // Validate request body
+    const data = req.body;
+    if (!Buffer.isBuffer(data)) {
+      return res.status(400).json(createErrorResponse(400, 'Request body must be raw data'));
+    }
+
+    // Update the fragment data
+    await fragment.setData(data);
+
+    // Return updated fragment metadata
+    const fragmentData = { ...fragment };
+    delete fragmentData.data;
+
+    log.debug({ fragmentId: fragment.id }, 'Fragment updated successfully');
+    return res.status(200).json(createSuccessResponse({ fragment: fragmentData }));
+  } catch (err) {
+    log.error({ err }, 'Error updating fragment');
+    if (err.message === 'Fragment not found') {
+      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    }
+    return res.status(500).json(createErrorResponse(500, err.message));
   }
 });
 

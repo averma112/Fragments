@@ -14,7 +14,7 @@ function writeFragment(fragment) {
 
 // Read a fragment's metadata from memory db. Returns a Promise<Object>
 async function readFragment(ownerId, id) {
-  // NOTE: this data will be raw JSON, we need to turn it back into an Object.
+  // NOTE: this data will be raw m, we need to turn it back into an Object.
   // You'll need to take care of converting this back into a Fragment instance
   // higher up in the callstack.
   const serialized = await metadata.get(ownerId, id);

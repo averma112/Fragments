@@ -83,3 +83,4 @@ HTTP/1.1 200
 [Asserts]
 jsonpath "$.fragments[*]" not contains "{{fragment1_id}}"
 jsonpath "$.fragments[*]" contains "{{fragment2_id}}"
+    

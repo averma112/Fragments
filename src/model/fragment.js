@@ -11,13 +11,17 @@ const { randomUUID } = require('crypto');
 const store = require('./data');
 
 const SUPPORTED_TYPES = [
-  'application/json',
   'text/plain',
   'text/markdown',
   'text/html',
+  'text/csv',
+  'application/json',
+  'application/yaml',
   'image/png',
   'image/jpeg',
+  'image/webp',
   'image/gif',
+  'image/avif',
 ];
 
 class Fragment {
