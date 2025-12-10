@@ -2,7 +2,9 @@ const http = require('http');
 const { URL } = require('url');
 
 // Get the server URL from environment variables or use default
-const serverUrl = process.env.API_URL || 'http://localhost:8080';
+// Use PORT env var if available (ECS sets this), otherwise default to 8080
+const port = process.env.PORT || 8080;
+const serverUrl = process.env.API_URL || `http://localhost:${port}`;
 const url = new URL('/', serverUrl);
 
 // Set a timeout for the health check
