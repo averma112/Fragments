@@ -7,28 +7,44 @@ services:
     container_name: fragments-fragments-1
     environment:
       - API_URL=http://localhost:8080
-      # Remove HTPASSWD_FILE to use Cognito instead of Basic Auth
-      # - HTPASSWD_FILE=tests/.htpasswd
+      - HTPASSWD_FILE=tests/.htpasswd
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - NODE_ENV=development
 
-      # Cognito configuration
-      - AWS_COGNITO_POOL_ID=${AWS_COGNITO_POOL_ID:-us-east-1_mWEmrcXtI}
-      - AWS_COGNITO_CLIENT_ID=${AWS_COGNITO_CLIENT_ID:-8o2l6geft81bg9dajjaqtuicj}
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_SESSION_TOKEN=test
 
-      # Real AWS credentials from your environment
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      # S3 (LocalStack)
+      - AWS_S3_ENDPOINT_URL=http://localstack:4566
+      - AWS_S3_BUCKET_NAME=fragments
 
-      # Real AWS S3 (not LocalStack)
-      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME:-averma112-fragments}
-
-      # Real AWS DynamoDB (not DynamoDB Local)
-      - AWS_DYNAMODB_TABLE_NAME=${AWS_DYNAMODB_TABLE_NAME:-fragments}
+      # DynamoDB Local
+      - AWS_DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+      - AWS_DYNAMODB_TABLE_NAME=fragments
 
     ports:
       - '8080:8080'
+    depends_on:
+      - dynamodb-local
+      - localstack
 
-  # Removed DynamoDB Local and LocalStack - using real AWS services
+  # DynamoDB Local, see: https://hub.docker.com/r/amazon/dynamodb-local
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    container_name: fragments-dynamodb-local-1
+    ports:
+      - '8000:8000'
+    # In-memory only, no disk
+    command: ['-jar', 'DynamoDBLocal.jar', '-inMemory']
+
+  # LocalStack, used here only for S3
+  localstack:
+    image: localstack/localstack
+    container_name: fragments-localstack-1
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
