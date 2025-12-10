@@ -149,7 +149,9 @@ router.post('/', rawBody(), async (req, res) => {
     log.debug({ fragmentId: fragment.id }, 'Saving fragment data');
     await fragment.setData(data);
 
-    const location = `${process.env.API_URL || 'http://localhost:8080'}/v1/fragments/${fragment.id}`;
+    // Build Location header with fallback to req headers
+    const apiUrl = process.env.API_URL || `${req.protocol}://${req.get('host')}`;
+    const location = `${apiUrl}/v1/fragments/${fragment.id}`;
     res.set('Location', location);
 
     const fragmentData = { ...fragment };

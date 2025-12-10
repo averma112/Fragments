@@ -24,7 +24,7 @@ const server = stoppable(
     logger.info(`Server started on port ${port}`);
 
     if (process.env.LOG_LEVEL === 'debug') {
-      console.log('Current process.env:', JSON.stringify(process.env, null, 2));
+      logger.debug({ env: process.env }, 'Current process environment');
     }
   })
   

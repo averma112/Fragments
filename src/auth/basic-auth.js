@@ -4,8 +4,8 @@
 // https://github.com/http-auth/http-auth-passport
 
 const auth = require('http-auth');
-const passport = require('passport');
 const authPassport = require('http-auth-passport');
+const authMiddleware = require('./auth-middleware');
 
 const logger = require('../logger');
 // We expect HTPASSWD_FILE to be defined.
@@ -25,4 +25,4 @@ module.exports.strategy = () =>
     })
   );
 
-module.exports.authenticate = () => passport.authenticate('http', { session: false });
+module.exports.authenticate = () => authMiddleware('http');

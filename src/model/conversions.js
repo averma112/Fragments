@@ -176,7 +176,8 @@ async function convertFragment(data, fromType, toExt) {
           return { data: converted, contentType: 'image/avif' };
         } catch (avifError) {
           // Fall back to WebP if AVIF encoding fails
-          console.warn('AVIF encoding not available, falling back to WebP:', avifError.message);
+          const logger = require('../logger');
+          logger.warn({ err: avifError }, 'AVIF encoding not available, falling back to WebP');
           const converted = await sharpImage.webp({ quality: 80 }).toBuffer();
           return { data: converted, contentType: 'image/webp' };
         }
