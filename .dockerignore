@@ -23,6 +23,7 @@ yarn-error.log*
 
 # Testing
 tests/
+!tests/.htpasswd
 test/
 coverage/
 .nyc_output/

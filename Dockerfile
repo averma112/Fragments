@@ -40,6 +40,9 @@ COPY src ./src
 # Copy healthcheck script
 COPY src/healthcheck.js ./
 
+# Copy .htpasswd for HTTP Basic Auth in tests
+COPY tests/.htpasswd ./tests/.htpasswd
+
 # Create non-root user for security
 RUN groupadd -r fragments && useradd -r -g fragments fragments \
     && chown -R fragments:fragments /app
